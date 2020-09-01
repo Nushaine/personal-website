@@ -1,0 +1,27 @@
+.nav-style {
+  margin-left: 16%;
+  margin-right: 16%;
+  margin-top: 1.5rem;
+  max-width: 950px;
+}
+
+.nav-blogs {
+  margin-left: 60%;
+}
+
+.nush-face {
+  width: 7%;
+}
+
+.nush-face:hover {
+  animation: animation-over 400s linear;
+}
+
+@keyframes animation-over {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(100000deg);
+  }
+}
