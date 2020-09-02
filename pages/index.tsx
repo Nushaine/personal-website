@@ -1,41 +1,41 @@
-import Link from "next/link";
+import React, { Component } from "react";
 
-const NOTION_BLOG_ID =
-  process.env.NOTION_BLOG_ID || "1099525da7e5405c961706de56622ccd";
+import dynamic from 'next/dynamic'
+const Navbar = dynamic(() => import('../components/navbar'))
 
-export type Post = { id: string; slug: string; title: string; date: string };
 
-export const getAllPosts = async (): Promise<Post[]> => {
-  return await fetch(
-    `https://notion-api.splitbee.io/v1/table/${NOTION_BLOG_ID}`
-  ).then((res) => res.json());
-};
+export default function Home() {
 
-export async function getStaticProps() {
-  const posts = await getAllPosts();
-  return {
-    props: {
-      posts,
-    },
-  };
-}
-
-function HomePage({ posts }: { posts: Post[] }) {
   return (
-    <div className="content">
-      <h1>Posts</h1>
-      <div>
-        {posts.map((post) => (
-          <Link href="/blog/[slug]" as={`/blog/${post.slug}`}>
-            <a>
-              <b>{post.title}</b>
-              <div className="sub">posted on {post.date}</div>
-            </a>
-          </Link>
-        ))}
+    <div className="main-container">
+      <Navbar />
+      <div className="main-contents">
+        <h1>
+          I'm a tech enthusiast interested in computer vision, finance,
+          startups, transportation, and personal growth.
+        </h1>
+        <p className="blogs">Couple Interesting Blog Posts: </p>
+        <a className="blogLink" href="https://docs.google.com/document/d/15LE2um2oB59h1iELpksz8AM8o9SIy9mL1OFL-PmGeJQ/edit?usp=sharing">
+          <p>Convolutional Neural Networks From the Ground Up</p>
+        </a>
+        <a className="blogLink" href="https://towardsdatascience.com/using-hourglass-networks-to-understand-human-poses-1e40e349fa15">
+          <p>Using Hourglass Networks To Understand Human Poses</p>
+        </a>
+        <a className="blogLink" href="https://towardsdatascience.com/a-deep-dive-into-lane-detection-with-hough-transform-8f90fdd1322f">
+          <p>A Deep Dive into Lane Detection with Hough Transform</p>
+        </a>
+        <button className="btn-more">Other Notes</button>
+
+        <p className="projects">Some Cool Projects: </p>
+        <p>Implementing a CNN from Scratch in Numpy</p>
+        <a className="blogLink" href="https://github.com/Nushaine/road-sign-classifier">
+          <p>Road Sign Classification using CNN's</p>
+        </a>
+        <p>Human Pose Estimation with Hourglass Nets</p>
+        <button className="btn-more last">More Projects</button>
       </div>
     </div>
   );
 }
 
-export default HomePage;
+
