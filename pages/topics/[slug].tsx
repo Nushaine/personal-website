@@ -1,7 +1,7 @@
 import { NotionRenderer, BlockMapType } from "react-notion";
 import React from "react"
 
-import { getAllPosts, Post } from "../topics";
+import { getTopic, Post } from "../../components/getContent";
 
 export async function getStaticProps({
   params: { slug },
@@ -9,14 +9,20 @@ export async function getStaticProps({
   params: { slug: string };
 }) {
   // Get all posts again
-  const posts = await getAllPosts();
+  const posts = await getTopic("af6467d314b24869bdca28e1e0c1c545");
 
   // Find the current blogpost by slug
   const post = posts.find((t) => t.slug === slug);
+  console.log(post?.id)
 
   const blocks = await fetch(
     `https://notion-api.splitbee.io/v1/page/${post!.id}`
   ).then((res) => res.json());
+  
+  console.log("BLOCKS")
+  console.log(blocks)
+  console.log("NOTION RENDERER")
+  console.log(<NotionRenderer blockMap={blocks} />)
 
   return {
     props: {
@@ -41,9 +47,9 @@ const BlogPost: React.FC<{ post: Post; blocks: BlockMapType }> = ({
 };
 
 export async function getStaticPaths() {
-  const table = await getAllPosts();
+  const table = await getTopic("af6467d314b24869bdca28e1e0c1c545");
   return {
-    paths: table.map((row) => `/blog/${row.slug}`),
+    paths: table.map((row) => `/topics/${row.slug}`),
     fallback: true,
   };
 }
