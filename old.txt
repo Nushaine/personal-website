@@ -1,0 +1,78 @@
+import Link from "next/link";
+import { NotionRenderer, BlockMapType } from "react-notion";
+import React, { useState, useEffect } from 'react';
+import Axios from 'axios'
+
+export type Post = { id: string; slug: string; title: string; section: string, date: string };
+export type Entry = { role: string; value: any};
+
+
+import dynamic from 'next/dynamic'
+import { Console } from "console";
+const Navbar = dynamic(() => import('../components/navbar'))
+
+
+
+
+export default function Tables() {
+
+  const [pageData, setData] = useState({})
+  const [title, setTitle] = useState("NONE")
+  const [pages, setPages] = useState([])
+
+
+    
+  async function fetchMainContent() {
+    console.log("ENTERED GETALLTABLES FUNc")
+
+    const blocks = await Axios.get(`https://notion-api.splitbee.io/v1/page/9d9acee1ba974befb33ba3c112e81c8a`)
+    setData(blocks.data)
+
+    const title = blocks.data['9d9acee1-ba97-4bef-b33b-a3c112e81c8a'].value.properties.title[0][0];
+    setTitle(title)
+
+
+    const arr: any = []
+    
+    Object.keys(blocks.data).forEach(async function(key:any) {
+
+      //console.log(blocks.data[key].value.type)
+
+      if(blocks.data[key].value.type === "collection_view_page") {
+        const pageId = blocks.data[key].value.id
+        const pageContents: Promise<Post[]> = await fetch(
+          `https://notion-api.splitbee.io/v1/table/${pageId}`
+        ).then((res) => res.json());
+        const titleObject = (await pageContents).find((object) => object.section !== "")
+        console.log("TITLEOBJ")
+        console.log(titleObject?.section)
+        arr.push([pageId, titleObject?.section]);
+      }
+     
+    });
+
+    setPages(arr)
+    }
+
+
+    
+    
+
+  async function loadEverything () {
+    await fetchMainContent()
+  }
+
+
+    
+
+  return (
+    <div className="content">
+      <h1>{title}</h1>
+      <NotionRenderer blockMap={pageData} />
+      {pages.map((page) => {
+        console.log("PAGE")
+        console.log(pages)
+      })}
+    </div>
+  );
+};

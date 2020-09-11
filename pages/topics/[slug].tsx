@@ -1,57 +1,44 @@
-import { NotionRenderer, BlockMapType } from "react-notion";
-import React from "react"
+import { NextPage } from 'next'
 
-import { getTopic, Post } from "../../components/getContent";
 
-export async function getStaticProps({
-  params: { slug },
-}: {
-  params: { slug: string };
-}) {
-  // Get all posts again
-  const posts = await getTopic("af6467d314b24869bdca28e1e0c1c545");
 
-  // Find the current blogpost by slug
-  const post = posts.find((t) => t.slug === slug);
-  console.log(post?.id)
+export type Post = { id: string; slug: string; title: string; section: string, date: string };
 
-  const blocks = await fetch(
-    `https://notion-api.splitbee.io/v1/page/${post!.id}`
-  ).then((res) => res.json());
-  
-  console.log("BLOCKS")
-  console.log(blocks)
-  console.log("NOTION RENDERER")
-  console.log(<NotionRenderer blockMap={blocks} />)
-
-  return {
-    props: {
-      blocks,
-      post,
-    },
-  };
+interface Props {
+  pageData?: any;
 }
 
-const BlogPost: React.FC<{ post: Post; blocks: BlockMapType }> = ({
-  post,
-  blocks,
-}) => {
-  if (!post) return null;
+const BlogPost: NextPage<Props> = ({pageData}) => {
+
+  console.log(pageData)
+
+  if (!pageData){
+      return (
+        <h1>Error</h1>
+      );
+  }
 
   return (
-    <div className="content">
-      <h1>{post.title}</h1>
-      <NotionRenderer blockMap={blocks} />
+    <div>
+      <h1>Contents Page</h1>
+        {pageData.map((post: any) => (
+          <p className="notionPost">{post.title}</p>
+        ))}
     </div>
   );
-};
-
-export async function getStaticPaths() {
-  const table = await getTopic("af6467d314b24869bdca28e1e0c1c545");
-  return {
-    paths: table.map((row) => `/topics/${row.slug}`),
-    fallback: true,
-  };
 }
 
-export default BlogPost;
+
+BlogPost.getInitialProps = async (ctx) => {
+  console.log('entereD GETINITIALPROPS')
+  const {query} = ctx;
+  console.log(query)
+  console.log(`query id ${query.id}`)
+  const response = await fetch(`https://notion-api.splitbee.io/v1/table/${query.id}`)
+  const pageData = await response.json()
+  return {pageData: pageData};
+}
+
+export default BlogPost
+
+

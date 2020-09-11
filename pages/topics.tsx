@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { NotionRenderer, BlockMapType } from "react-notion";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Axios from 'axios'
 
 export type Post = { id: string; slug: string; title: string; section: string, date: string };
-export type Entry = { role: string; value: any};
+export type Arr = { id: string; section: any};
+
 
 
 import dynamic from 'next/dynamic'
@@ -11,87 +13,85 @@ import { Console } from "console";
 const Navbar = dynamic(() => import('../components/navbar'))
 
 
+export async function getStaticProps() {
+  console.log("started GETSSTATICPROPS")
+
+  const blocks = await fetch(`https://notion-api.splitbee.io/v1/page/9d9acee1ba974befb33ba3c112e81c8a`).then((res) => res.json());
+  //setData(blocks.data)
+  console.log("got blocks")
 
 
-export default function Tables() {
-
-  const [blocks, setBlocks] = useState({})
-  const [title, setTitle] = useState("")
-  const [pages, setPages] = useState([])
+  const title = blocks['9d9acee1-ba97-4bef-b33b-a3c112e81c8a'].value.properties.title[0][0];
+  console.log("got page title")
 
 
-    
-  async function getMainContent() {
-    console.log("ENTERED GETALLTABLES FUNc")
-
-    const blocks = await fetch(
-      `https://notion-api.splitbee.io/v1/page/9d9acee1ba974befb33ba3c112e81c8a`
-    ).then((res) => res.json());
-    setBlocks(blocks)
-
-    const title = blocks['9d9acee1-ba97-4bef-b33b-a3c112e81c8a'].value.properties.title[0][0];
-    setTitle(title)
-
-    /* console.log("BLOCKS INDEX")
-    console.log(blocks['9d9acee1-ba97-4bef-b33b-a3c112e81c8a'].value.properties.title[0][0])
-    console.log("NOTION RENDERER")
-    console.log(<NotionRenderer blockMap={blocks} />) */
-
-    const arr: any = []
-    console.log("OBJECT KEYS")
-    console.log(Object.keys(blocks))
-    Object.keys(blocks).forEach(async function(key:any) {
+  const getTopics = async function() {
+    console.log("entering for loop")
+    const arr: any =  []
+  
+    for (const key of Object.keys(blocks)) {
       if(blocks[key].value.type === "collection_view_page") {
         const pageId = blocks[key].value.id
+        //console.log(blocks[key].value)
         const pageContents: Promise<Post[]> = await fetch(
           `https://notion-api.splitbee.io/v1/table/${pageId}`
         ).then((res) => res.json());
-        console.log("PAGECONTENTS");
-        const titleObject = (await pageContents).find((object) => object.section !== "")
-        arr.push([pageId, titleObject]);
+        const titleObject = (await pageContents).find((object) => object.title === "do-not-delete")
+        console.log("addnig content to array")
+  
+        const content: any = [pageId, titleObject?.section, titleObject?.slug]
+        arr.push(content)
       }
-     
-    });
-    console.log("ARRAY AFTER PUSHES")
-    console.log(arr)
-
-    setPages(arr)
+    }
     
+    console.log('outputting array from for loop')
+    return arr
   }
 
-  /*   async function getAllTables() {
-    console.log("ENTER GET ALLTABLES FUNCTION")
-    const arr: any = []
-    Object.keys(blocks).forEach(function(key:any) {
-      arr.push(blocks[key]);
-    });
-    console.log("BLOCKSS")
-    console.log(blocks)
-    console.log("MAPPED ALL JSON ENTRIES")
-    arr.map((block:any) => {
-      console.log("BLOCK")
-      console.log(block)
-    })
-  } */
+  const arr = await getTopics()
 
-  async function loadEverything () {
-    await getMainContent()
-  }
-  
-  loadEverything()
-  
+  console.log("outputting props")
+  console.log(arr)
+
+  return {
+    props: {
+      blocks,
+      title,
+      arr
+    },
+  };
+}
+
+const MainContent: React.FC<{ arr: Arr[]; blocks: BlockMapType; title: string }> = ({
+  blocks,
+  title,
+  arr
+}) => {
 
 
-  console.log("PAGES")
-  console.log(pages)
-  if (pages===[]) return null;
+  if (!blocks) return (
+    <h1>Loading Content From Notion...</h1>
+  );
+
+
+  console.log("FINAL ARRAY")
+  console.log(arr)
   return (
     <div className="content">
+      <Navbar />
       <h1>{title}</h1>
-      <NotionRenderer blockMap={blocks} />
-      {pages.map((page) => {
-        <p>{page}</p>
-      })}
+      {/* <NotionRenderer blockMap={blocks} /> */}
+      <div>
+        {arr.map((topic: any) => (
+          <Link href={{ pathname: `/topics/[slug]?id=${topic[0]}`, query: {id: topic[0]}}} as={`/topics/${topic[2]}`}>
+            <a className="notionLink">
+              <h1>{topic[1]}</h1>
+            </a>
+          </Link>
+        ))}
+        </div>
     </div>
   );
 };
+
+export default MainContent;
